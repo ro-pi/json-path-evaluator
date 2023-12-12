@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace Ropi\JsonPathEvaluator;
 
 use Ropi\JsonPathEvaluator\Context\Node;
-use Ropi\JsonPathEvaluator\Context\PathEvaluationContext;
-use Ropi\JsonPathEvaluator\Exception\EvaluationException;
-use Ropi\JsonPathEvaluator\Exception\PathEvaluatorException;
+use Ropi\JsonPathEvaluator\Context\EvaluationContext;
+use Ropi\JsonPathEvaluator\Exception\JsonPathEvaluationException;
+use Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException;
 use Ropi\JsonPathEvaluator\Parser\Ast\JsonPathExpression\AbstractJsonPathExpressionNode;
 use Ropi\JsonPathEvaluator\Parser\Ast\JsonPathExpression\AbstractSegmentNode;
 use Ropi\JsonPathEvaluator\Parser\Ast\JsonPathExpression\AbstractSelectorNode;
@@ -96,7 +96,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
 
     /**
      * @throws \ReflectionException
-     * @throws PathEvaluatorException
+     * @throws JsonPathEvaluatorException
      */
     public function getValues(array|\stdClass $data, string $path): array
     {
@@ -104,7 +104,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     }
 
     /**
-     * @throws PathEvaluatorException
+     * @throws JsonPathEvaluatorException
      * @throws \ReflectionException
      */
     public function setValues(array|\stdClass $data, string $path, array $values): void
@@ -138,7 +138,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     }
 
     /**
-     * @throws PathEvaluatorException
+     * @throws JsonPathEvaluatorException
      * @throws \ReflectionException
      */
     public function deleteValues(array|\stdClass $data, string $path): void
@@ -173,7 +173,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
 
     /**
      * @throws \ReflectionException
-     * @throws PathEvaluatorException
+     * @throws JsonPathEvaluatorException
      */
     public function getPaths(array|\stdClass $data, string $path): array
     {
@@ -245,11 +245,11 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     /**
      * @param \stdClass|array<scalar, mixed> $data
      * @throws \ReflectionException
-     * @throws PathEvaluatorException
+     * @throws JsonPathEvaluatorException
      */
     public function evaluate(array|\stdClass $data, string $path): NodeList
     {
-        $pathEvaluationContext = new PathEvaluationContext($data, $path);
+        $pathEvaluationContext = new EvaluationContext($data, $path);
 
         return $this->evaluateJsonPathExpression(
             $this->getParser()->parse($path),
@@ -259,13 +259,13 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     }
 
     /**
-     * @throws EvaluationException
+     * @throws JsonPathEvaluationException
      * @throws \ReflectionException
      */
     protected function evaluateJsonPathExpression(
         NodeInterface $astNode,
         Node $currentNode,
-        PathEvaluationContext $pathEvaluationContext
+        EvaluationContext $pathEvaluationContext
     ): NodeList {
         if ($astNode instanceof AbstractSelectorNode) {
             $resultNodeList = $this->evaluateSelector($astNode, $currentNode, $pathEvaluationContext);
@@ -279,13 +279,13 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     }
 
     /**
-     * @throws EvaluationException
+     * @throws JsonPathEvaluationException
      * @throws \ReflectionException
      */
     protected function evaluateSegmentNode(
         AbstractSegmentNode $astNode,
         Node $currentNode,
-        PathEvaluationContext $pathEvaluationContext
+        EvaluationContext $pathEvaluationContext
     ): NodeList {
         $resultNodeList = new NodeList();
 
@@ -317,13 +317,13 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     }
 
     /**
-     * @throws EvaluationException
+     * @throws JsonPathEvaluationException
      * @throws \ReflectionException
      */
     protected function evaluateDescendantSegmentNode(
         AbstractSegmentNode|AbstractSelectorNode $astNode,
         Node $currentNode,
-        PathEvaluationContext $pathEvaluationContext
+        EvaluationContext $pathEvaluationContext
     ): NodeList {
         $resultNodeList = new NodeList();
 
@@ -359,13 +359,13 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     }
 
     /**
-     * @throws EvaluationException
+     * @throws JsonPathEvaluationException
      * @throws \ReflectionException
      */
     protected function evaluateSelector(
         AbstractSelectorNode  $astNode,
         Node $currentNode,
-        PathEvaluationContext $pathEvaluationContext
+        EvaluationContext $pathEvaluationContext
     ): NodeList {
         if ($astNode instanceof NodeIdentifierNode) {
             $resultNodeList = new SingularNodeList();
@@ -509,13 +509,13 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     }
 
     /**
-     * @throws EvaluationException
+     * @throws JsonPathEvaluationException
      * @throws \ReflectionException
      */
     protected function evaluateLogicalExpressionNode(
         AbstractSegmentNode|AbstractSelectorNode|AbstractLogicalExpressionNode $astNode,
         Node $currentNode,
-        PathEvaluationContext $pathEvaluationContext
+        EvaluationContext $pathEvaluationContext
     ): mixed {
         if ($astNode instanceof AbstractJsonPathExpressionNode) {
             return $this->evaluateJsonPathExpression($astNode, $currentNode, $pathEvaluationContext);
@@ -524,7 +524,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
         if ($astNode instanceof FunctionNode) {
             $function = $this->getFunctions()[$astNode->token->value] ?? null;
             if (!$function) {
-                throw new EvaluationException(
+                throw new JsonPathEvaluationException(
                     $astNode->token->value . ' is not defined',
                     $astNode->token->position,
                     $pathEvaluationContext->expression,
@@ -651,7 +651,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
             return $this->evaluateUnaryOperatorNode($astNode, $currentNode, $pathEvaluationContext);
         }
 
-        throw new EvaluationException(
+        throw new JsonPathEvaluationException(
             'Can not evaluate unexpected node ' . $astNode->token->value . ' (' . get_class($astNode) . ')',
             $astNode->token->position,
             $pathEvaluationContext->expression,
@@ -660,13 +660,13 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     }
 
     /**
-     * @throws EvaluationException
+     * @throws JsonPathEvaluationException
      * @throws \ReflectionException
      */
     protected function evaluateUnaryOperatorNode(
         AbstractUnaryOperatorNode $astNode,
         Node $currentNode,
-        PathEvaluationContext $pathEvaluationContext
+        EvaluationContext $pathEvaluationContext
     ): LogicalFalse|LogicalTrue|Nothing|bool {
         /** @noinspection PhpConditionAlreadyCheckedInspection */
         if ($astNode instanceof LogicalNotNode) {
@@ -690,7 +690,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
             return $expressionResult ? new LogicalFalse() : new LogicalTrue();
         }
 
-        throw new EvaluationException(
+        throw new JsonPathEvaluationException(
             'Unexpected unary operator node ' . $astNode->token->value,
             $astNode->token->position,
             $pathEvaluationContext->expression,
@@ -699,13 +699,13 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     }
 
     /**
-     * @throws EvaluationException
+     * @throws JsonPathEvaluationException
      * @throws \ReflectionException
      */
     protected function evaluateBinaryOperatorNode(
         AbstractBinaryOperatorNode $astNode,
         Node $currentNode,
-        PathEvaluationContext $pathEvaluationContext
+        EvaluationContext $pathEvaluationContext
     ): AbstractLogicalType {
         $leftExpressionResult = $this->evaluateLogicalExpressionNode($astNode->leftNode, $currentNode, $pathEvaluationContext);
         $rightExpressionResult = $this->evaluateLogicalExpressionNode($astNode->rightNode, $currentNode, $pathEvaluationContext);
@@ -799,7 +799,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
             return $leftExpressionResult && $rightExpressionResult ? new LogicalTrue() : new LogicalFalse();
         }
 
-        throw new EvaluationException(
+        throw new JsonPathEvaluationException(
             'Unexpected binary operator node ' . $astNode->token->value,
             $astNode->token->position,
             $pathEvaluationContext->expression,

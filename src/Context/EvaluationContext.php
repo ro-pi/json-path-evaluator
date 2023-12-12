@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 namespace Ropi\JsonPathEvaluator\Context;
 
-class PathEvaluationContext
+class EvaluationContext
 {
     /**
-     * @var array<string, node>
+     * @var array<string, Node>
      */
     private array $nodes = [];
     private Node $rootNode;

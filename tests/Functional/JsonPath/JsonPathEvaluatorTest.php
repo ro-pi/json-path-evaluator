@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Ropi\JsonPathEvaluator\Tests\Functional\JsonPath;
 
-use Ropi\JsonPathEvaluator\Exception\PathEvaluatorException;
+use Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException;
 use Ropi\JsonPathEvaluator\Parser\Exception\ParseException;
 use Ropi\JsonPathEvaluator\Types\AbstractLogicalType;
 use Ropi\JsonPathEvaluator\Types\AbstractNodesType;
@@ -14,7 +14,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
 {
     /**
      * @throws \ReflectionException
-     * @throws \Ropi\JsonPathEvaluator\Exception\PathEvaluatorException
+     * @throws \Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException
      */
     public function testGeneral(): void
     {
@@ -369,7 +369,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
     /**
      * @return void
      * @throws \ReflectionException
-     * @throws \Ropi\JsonPathEvaluator\Exception\PathEvaluatorException
+     * @throws \Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException
      */
     public function testRoot(): void
     {
@@ -393,7 +393,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
     /**
      * @return void
      * @throws \ReflectionException
-     * @throws \Ropi\JsonPathEvaluator\Exception\PathEvaluatorException
+     * @throws \Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException
      */
     public function testNameSelector(): void
     {
@@ -456,7 +456,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
     /**
      * @return void
      * @throws \ReflectionException
-     * @throws \Ropi\JsonPathEvaluator\Exception\PathEvaluatorException
+     * @throws \Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException
      */
     public function testWildcard(): void
     {
@@ -519,7 +519,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
     /**
      * @return void
      * @throws \ReflectionException
-     * @throws \Ropi\JsonPathEvaluator\Exception\PathEvaluatorException
+     * @throws \Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException
      */
     public function testIndexSelector(): void
     {
@@ -555,7 +555,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
     /**
      * @return void
      * @throws \ReflectionException
-     * @throws \Ropi\JsonPathEvaluator\Exception\PathEvaluatorException
+     * @throws \Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException
      */
     public function testArraySliceSelector(): void
     {
@@ -627,7 +627,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
     /**
      * @return void
      * @throws \ReflectionException
-     * @throws \Ropi\JsonPathEvaluator\Exception\PathEvaluatorException
+     * @throws \Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException
      */
     public function testFilterSelector(): void
     {
@@ -940,7 +940,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
     /**
      * @return void
      * @throws \ReflectionException
-     * @throws \Ropi\JsonPathEvaluator\Exception\PathEvaluatorException
+     * @throws \Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException
      */
     public function testFunctionExtensions(): void
     {
@@ -1037,7 +1037,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
     /**
      * @return void
      * @throws \ReflectionException
-     * @throws \Ropi\JsonPathEvaluator\Exception\PathEvaluatorException
+     * @throws \Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException
      */
     public function testChildSegment(): void
     {
@@ -1085,7 +1085,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
     /**
      * @return void
      * @throws \ReflectionException
-     * @throws \Ropi\JsonPathEvaluator\Exception\PathEvaluatorException
+     * @throws \Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException
      */
     public function testDescendantSegment(): void
     {
@@ -1240,7 +1240,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
     /**
      * @return void
      * @throws \ReflectionException
-     * @throws \Ropi\JsonPathEvaluator\Exception\PathEvaluatorException
+     * @throws \Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException
      */
     public function testNull(): void
     {
@@ -1358,7 +1358,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
     }
 
     /**
-     * @throws PathEvaluatorException
+     * @throws JsonPathEvaluatorException
      * @throws \ReflectionException
      */
     public function testNormalizedPaths(): void
@@ -1416,7 +1416,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
 
     /**
      * @throws \ReflectionException
-     * @throws \Ropi\JsonPathEvaluator\Exception\PathEvaluatorException
+     * @throws \Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException
      */
     public function testCompliance(): void
     {
@@ -1445,7 +1445,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
                 }
 
                 $this->assertNotNull($parseException ?? null);
-                $this->assertInstanceOf(PathEvaluatorException::class, $parseException);
+                $this->assertInstanceOf(JsonPathEvaluatorException::class, $parseException);
             } else {
                 $this->assertJsonPathResult(
                     $evaluator->getValues($data, $test->selector),

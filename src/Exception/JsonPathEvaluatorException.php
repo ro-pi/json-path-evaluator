@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Ropi\JsonPathEvaluator\Exception;
 
-class PathEvaluatorException extends \Exception
+class JsonPathEvaluatorException extends \Exception
 {
     public function __construct(
         string                  $message,

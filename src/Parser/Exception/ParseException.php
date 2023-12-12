@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Ropi\JsonPathEvaluator\Parser\Exception;
 
-use Ropi\JsonPathEvaluator\Exception\PathEvaluatorException;
+use Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException;
 
-class ParseException extends PathEvaluatorException
+class ParseException extends JsonPathEvaluatorException
 {}
