@@ -10,6 +10,10 @@ use Ropi\JsonPathEvaluator\Parser\Lexer\Token\TokenInterface;
 abstract class AbstractBinaryOperatorNode extends AbstractLogicalExpressionNode
 {
     public const PRECEDENCE = null;
+
+    /**
+     * @noinspection PhpUnused
+     */
     public const ASSOCIATIVITY_LEFT_TO_RIGHT = true;
 
     public function __construct(

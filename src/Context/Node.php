@@ -9,7 +9,7 @@ class Node
      * @param array<string|int> $pathSegments
      */
     public function __construct(
-        public readonly mixed $value,
+        public mixed &$value,
         public readonly array $pathSegments
     ) {}
 }

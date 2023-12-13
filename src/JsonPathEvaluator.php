@@ -100,16 +100,16 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
      */
     public function getValues(array|\stdClass $data, string $path): array
     {
-        return $this->evaluate($data, $path)->getNodeValues();
+        return $this->evaluate($data, $path, false)->getNodeValues();
     }
 
     /**
      * @throws JsonPathEvaluatorException
      * @throws \ReflectionException
      */
-    public function setValues(array|\stdClass $data, string $path, array $values): void
+    public function setValues(array|\stdClass &$data, string $path, array $values, bool $createNonExistent = false): void
     {
-        $nodeList = $this->evaluate($data, $path);
+        $nodeList = $this->evaluate($data, $path, $createNonExistent);
 
         if ($values) {
             $newValuePointer = 0;
@@ -143,7 +143,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
      */
     public function deleteValues(array|\stdClass $data, string $path): void
     {
-        $nodeList = $this->evaluate($data, $path);
+        $nodeList = $this->evaluate($data, $path, false);
 
         foreach ($nodeList->getNodes() as $node) {
             $currentData =& $data;
@@ -177,7 +177,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
      */
     public function getPaths(array|\stdClass $data, string $path): array
     {
-        $nodeList = $this->evaluate($data, $path);
+        $nodeList = $this->evaluate($data, $path, false);
 
         $paths = [];
 
@@ -247,14 +247,14 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
      * @throws \ReflectionException
      * @throws JsonPathEvaluatorException
      */
-    public function evaluate(array|\stdClass $data, string $path): NodeList
+    public function evaluate(array|\stdClass &$data, string $path, bool $createNonExistent): NodeList
     {
-        $pathEvaluationContext = new EvaluationContext($data, $path);
+        $evaluationContext = new EvaluationContext($data, $path, $createNonExistent);
 
         return $this->evaluateJsonPathExpression(
             $this->getParser()->parse($path),
-            $pathEvaluationContext->getRootNode(),
-            $pathEvaluationContext
+            $evaluationContext->getRootNode(),
+            $evaluationContext
         );
     }
 
@@ -265,12 +265,12 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     protected function evaluateJsonPathExpression(
         NodeInterface $astNode,
         Node $currentNode,
-        EvaluationContext $pathEvaluationContext
+        EvaluationContext $evaluationContext
     ): NodeList {
         if ($astNode instanceof AbstractSelectorNode) {
-            $resultNodeList = $this->evaluateSelector($astNode, $currentNode, $pathEvaluationContext);
+            $resultNodeList = $this->evaluateSelector($astNode, $currentNode, $evaluationContext);
         } elseif ($astNode instanceof AbstractSegmentNode) {
-            $resultNodeList = $this->evaluateSegmentNode($astNode, $currentNode, $pathEvaluationContext);
+            $resultNodeList = $this->evaluateSegmentNode($astNode, $currentNode, $evaluationContext);
         } else {
             $resultNodeList = new NodeList();
         }
@@ -285,17 +285,17 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     protected function evaluateSegmentNode(
         AbstractSegmentNode $astNode,
         Node $currentNode,
-        EvaluationContext $pathEvaluationContext
+        EvaluationContext $evaluationContext
     ): NodeList {
         $resultNodeList = new NodeList();
 
-        $leftExpressionResult = $this->evaluateJsonPathExpression($astNode->leftNode, $currentNode, $pathEvaluationContext);
+        $leftExpressionResult = $this->evaluateJsonPathExpression($astNode->leftNode, $currentNode, $evaluationContext);
 
         if ($astNode instanceof ChildSegmentNode) {
             foreach ($leftExpressionResult->getNodes() as $node) {
                 $resultNodeList = $this->combineNodeLists(
                     $resultNodeList,
-                    $this->evaluateJsonPathExpression($astNode->rightNode, $node, $pathEvaluationContext)
+                    $this->evaluateJsonPathExpression($astNode->rightNode, $node, $evaluationContext)
                 );
             }
 
@@ -307,7 +307,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
                     $this->evaluateDescendantSegmentNode(
                         $astNode->rightNode,
                         $node,
-                        $pathEvaluationContext
+                        $evaluationContext
                     )
                 );
             }
@@ -323,32 +323,43 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     protected function evaluateDescendantSegmentNode(
         AbstractSegmentNode|AbstractSelectorNode $astNode,
         Node $currentNode,
-        EvaluationContext $pathEvaluationContext
+        EvaluationContext $evaluationContext
     ): NodeList {
         $resultNodeList = new NodeList();
 
         if ($astNode instanceof AbstractSegmentNode) {
             $resultNodeList = $this->combineNodeLists(
                 $resultNodeList,
-                $this->evaluateJsonPathExpression($astNode->rightNode, $currentNode, $pathEvaluationContext)
+                $this->evaluateJsonPathExpression($astNode->rightNode, $currentNode, $evaluationContext)
             );
         } else {
             $resultNodeList = $this->combineNodeLists(
                 $resultNodeList,
-                $this->evaluateSelector($astNode, $currentNode, $pathEvaluationContext)
+                $this->evaluateSelector($astNode, $currentNode, $evaluationContext)
             );
         }
 
-        if ($currentNode->value instanceof \stdClass || is_array($currentNode->value)) {
-            /* @phpstan-ignore-next-line */
-            foreach ($currentNode->value as $segment => $childNodeValue) {
+        if ($currentNode->value instanceof \stdClass) {
+            $currentNodeValue = get_object_vars($currentNode->value);
+        } elseif (is_array($currentNode->value)) {
+            $currentNodeValue = $currentNode->value;
+        }
+
+        if (isset($currentNodeValue)) {
+            foreach ($currentNodeValue as $segment => &$childNodeValue) {
                 if ($childNodeValue instanceof \stdClass || is_array($childNodeValue)) {
+                    $childNode = $evaluationContext->getChildNode($currentNode, $segment, $childNodeValue);
+
+                    if ($evaluationContext->createNonExistent && $evaluationContext->nodeCreatedDynamically($childNode)) {
+                        continue;
+                    }
+
                     $resultNodeList = $this->combineNodeLists(
                         $resultNodeList,
                         $this->evaluateDescendantSegmentNode(
                             $astNode,
-                            $pathEvaluationContext->getChildNode($currentNode, $segment, $childNodeValue),
-                            $pathEvaluationContext
+                            $childNode,
+                            $evaluationContext
                         ),
                     );
                 }
@@ -365,13 +376,13 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     protected function evaluateSelector(
         AbstractSelectorNode  $astNode,
         Node $currentNode,
-        EvaluationContext $pathEvaluationContext
+        EvaluationContext $evaluationContext
     ): NodeList {
         if ($astNode instanceof NodeIdentifierNode) {
             $resultNodeList = new SingularNodeList();
 
             if ($astNode->token->value === '$') {
-                $resultNodeList->addNode($pathEvaluationContext->getRootNode());
+                $resultNodeList->addNode($evaluationContext->getRootNode());
             } else {
                 $resultNodeList->addNode($currentNode);
             }
@@ -388,41 +399,53 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
 
             if ($currentNode->value instanceof \stdClass) {
                 $segment = (string)$segment;
-                if (property_exists($currentNode->value, $segment)) {
-                    $resultNodeList->addNode(
-                        $pathEvaluationContext->getChildNode(
-                            $currentNode,
-                            $segment,
-                            $currentNode->value->{$segment}
-                        )
-                    );
+                $createdDynamically = false;
+
+                if (!property_exists($currentNode->value, $segment)) {
+                    if (!$evaluationContext->createNonExistent) {
+                        return $resultNodeList;
+                    }
+
+                    $currentNode->value->{$segment} = new \stdClass();
+                    $createdDynamically = true;
                 }
+
+                $resultNodeList->addNode(
+                    $evaluationContext->getChildNode(
+                        $currentNode,
+                        $segment,
+                        $currentNode->value->{$segment},
+                        $createdDynamically
+                    )
+                );
             } elseif (is_array($currentNode->value)) {
                 if (is_int($segment) && $segment < 0) {
                     if (count($currentNode->value) >= abs($segment)) {
-                        $slice = array_slice($currentNode->value, $segment, 1, true);
-                        if ($slice) {
-                            $realSegment = array_key_first($slice);
-                            $resultNodeList->addNode(
-                                $pathEvaluationContext->getChildNode(
-                                    $currentNode,
-                                    $realSegment,
-                                    $slice[$realSegment]
-                                )
-                            );
-                        }
-                    }
-                } else {
-                    if (array_key_exists($segment, $currentNode->value)) {
-                        $resultNodeList->addNode(
-                            $pathEvaluationContext->getChildNode(
-                                $currentNode,
-                                $segment,
-                                $currentNode->value[$segment]
-                            )
-                        );
+                        [$segment] = $this->calculateArraySliceBounds($segment, $segment + 1, 1, count($currentNode->value));
+                    } elseif ($evaluationContext->createNonExistent) {
+                        $segment = 0;
                     }
                 }
+
+                $createdDynamically = false;
+
+                if (!array_key_exists($segment, $currentNode->value)) {
+                    if (!$evaluationContext->createNonExistent) {
+                        return $resultNodeList;
+                    }
+
+                    $currentNode->value[$segment] = new \stdClass();
+                    $createdDynamically = true;
+                }
+
+                $resultNodeList->addNode(
+                    $evaluationContext->getChildNode(
+                        $currentNode,
+                        $segment,
+                        $currentNode->value[$segment],
+                        $createdDynamically
+                    )
+                );
             }
 
             return $resultNodeList;
@@ -431,11 +454,16 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
         $resultNodeList = new NodeList();
 
         if ($astNode instanceof WildcardSelectorNode) {
-            if (is_array($currentNode->value) || $currentNode->value instanceof \stdClass) {
-                /* @phpstan-ignore-next-line */
-                foreach ($currentNode->value as $segment => $propertyValue) {
+            if ($currentNode->value instanceof \stdClass) {
+                $currentNodeValue = get_object_vars($currentNode->value);
+            } elseif (is_array($currentNode->value)) {
+                $currentNodeValue = $currentNode->value;
+            }
+
+            if (isset($currentNodeValue)) {
+                foreach ($currentNodeValue as $segment => &$propertyValue) {
                     $resultNodeList->addNode(
-                        $pathEvaluationContext->getChildNode(
+                        $evaluationContext->getChildNode(
                             $currentNode,
                             $segment,
                             $propertyValue
@@ -448,17 +476,48 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
         }
 
         if ($astNode instanceof ArraySliceSelectorNode) {
-            if (is_array($currentNode->value) && is_int(array_key_first($currentNode->value))) {
+            if (is_array($currentNode->value) && (!$currentNode->value || is_int(array_key_first($currentNode->value)))) {
                 $start = is_string($astNode->start) ? (int)$astNode->start : null;
                 $end = is_string($astNode->end) ? (int)$astNode->end : null;
                 $step = is_string($astNode->step) ? (int)$astNode->step : 1;
+                $slice = $this->sliceArray($currentNode->value, $start, $end, $step);
 
-                foreach ($this->sliceArray($currentNode->value, $start, $end, $step) as $segment => $nodeValue) {
+                $createdDynamically = false;
+
+                if (!$slice && $evaluationContext->createNonExistent) {
+                    [, , $start, $end] = $this->calculateArraySliceBounds(
+                        $start,
+                        $end,
+                        $step,
+                        count($currentNode->value)
+                    );
+
+                    if ($start < 0) {
+                        $start = 0;
+                    }
+
+                    if ($end < 0) {
+                        $end = 0;
+                    }
+
+                    $end += 1;
+
+                    $i = $start;
+                    while ($i < $end) {
+                        $slice[$i] = new \stdClass();
+                        $i += $step;
+                    }
+
+                    $createdDynamically = true;
+                }
+
+                foreach ($slice as $segment => &$nodeValue) {
                     $resultNodeList->addNode(
-                        $pathEvaluationContext->getChildNode(
+                        $evaluationContext->getChildNode(
                             $currentNode,
                             $segment,
-                            $nodeValue
+                            $nodeValue,
+                            $createdDynamically
                         )
                     );
                 }
@@ -468,15 +527,20 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
         }
 
         if ($astNode instanceof FilterExpressionSelectorNode) {
-            if (is_array($currentNode->value) || $currentNode->value instanceof \stdClass) {
-                /* @phpstan-ignore-next-line */
-                foreach ($currentNode->value as $segment => $childNodeValue) {
-                    $childNode = $pathEvaluationContext->getChildNode($currentNode, $segment, $childNodeValue);
+            if ($currentNode->value instanceof \stdClass) {
+                $currentNodeValue = get_object_vars($currentNode->value);
+            } elseif (is_array($currentNode->value)) {
+                $currentNodeValue = $currentNode->value;
+            }
+
+            if (isset($currentNodeValue)) {
+                foreach ($currentNodeValue as $segment => &$childNodeValue) {
+                    $childNode = $evaluationContext->getChildNode($currentNode, $segment, $childNodeValue);
 
                     $expressionResult = $this->evaluateLogicalExpressionNode(
                         $astNode->expressionNode,
                         $childNode,
-                        $pathEvaluationContext
+                        $evaluationContext
                     );
 
                     if ($expressionResult instanceof AbstractNodesType) {
@@ -496,7 +560,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
 
         if ($astNode instanceof UnionSelectorNode) {
             foreach ($astNode->selectorNodes as $selectorNode) {
-                $selectorNodeList = $this->evaluateSelector($selectorNode, $currentNode, $pathEvaluationContext);
+                $selectorNodeList = $this->evaluateSelector($selectorNode, $currentNode, $evaluationContext);
                 foreach ($selectorNodeList->getNodes() as $node) {
                     $resultNodeList->addNode($node);
                 }
@@ -515,10 +579,10 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     protected function evaluateLogicalExpressionNode(
         AbstractSegmentNode|AbstractSelectorNode|AbstractLogicalExpressionNode $astNode,
         Node $currentNode,
-        EvaluationContext $pathEvaluationContext
+        EvaluationContext $evaluationContext
     ): mixed {
         if ($astNode instanceof AbstractJsonPathExpressionNode) {
-            return $this->evaluateJsonPathExpression($astNode, $currentNode, $pathEvaluationContext);
+            return $this->evaluateJsonPathExpression($astNode, $currentNode, $evaluationContext);
         }
 
         if ($astNode instanceof FunctionNode) {
@@ -527,7 +591,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
                 throw new JsonPathEvaluationException(
                     $astNode->token->value . ' is not defined',
                     $astNode->token->position,
-                    $pathEvaluationContext->expression,
+                    $evaluationContext->expression,
                     1701811755
                 );
             }
@@ -544,7 +608,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
                     continue;
                 }
 
-                $argument = $this->evaluateLogicalExpressionNode($argumentNode, $currentNode, $pathEvaluationContext);
+                $argument = $this->evaluateLogicalExpressionNode($argumentNode, $currentNode, $evaluationContext);
 
                 $reflectionParameterType = $reflectionParameter->getType();
                 if (!$reflectionParameterType) {
@@ -644,17 +708,17 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
         }
 
         if ($astNode instanceof AbstractBinaryOperatorNode) {
-            return $this->evaluateBinaryOperatorNode($astNode, $currentNode, $pathEvaluationContext);
+            return $this->evaluateBinaryOperatorNode($astNode, $currentNode, $evaluationContext);
         }
 
         if ($astNode instanceof AbstractUnaryOperatorNode) {
-            return $this->evaluateUnaryOperatorNode($astNode, $currentNode, $pathEvaluationContext);
+            return $this->evaluateUnaryOperatorNode($astNode, $currentNode, $evaluationContext);
         }
 
         throw new JsonPathEvaluationException(
             'Can not evaluate unexpected node ' . $astNode->token->value . ' (' . get_class($astNode) . ')',
             $astNode->token->position,
-            $pathEvaluationContext->expression,
+            $evaluationContext->expression,
             1701659747
         );
     }
@@ -666,11 +730,11 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     protected function evaluateUnaryOperatorNode(
         AbstractUnaryOperatorNode $astNode,
         Node $currentNode,
-        EvaluationContext $pathEvaluationContext
+        EvaluationContext $evaluationContext
     ): LogicalFalse|LogicalTrue|Nothing|bool {
         /** @noinspection PhpConditionAlreadyCheckedInspection */
         if ($astNode instanceof LogicalNotNode) {
-            $expressionResult = $this->evaluateLogicalExpressionNode($astNode->termNode, $currentNode, $pathEvaluationContext);
+            $expressionResult = $this->evaluateLogicalExpressionNode($astNode->termNode, $currentNode, $evaluationContext);
             if ($expressionResult instanceof AbstractNodesType) {
                 return $expressionResult->getNodes() ? new LogicalFalse() : new LogicalTrue();
             }
@@ -693,7 +757,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
         throw new JsonPathEvaluationException(
             'Unexpected unary operator node ' . $astNode->token->value,
             $astNode->token->position,
-            $pathEvaluationContext->expression,
+            $evaluationContext->expression,
             1701659703
         );
     }
@@ -705,10 +769,10 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
     protected function evaluateBinaryOperatorNode(
         AbstractBinaryOperatorNode $astNode,
         Node $currentNode,
-        EvaluationContext $pathEvaluationContext
+        EvaluationContext $evaluationContext
     ): AbstractLogicalType {
-        $leftExpressionResult = $this->evaluateLogicalExpressionNode($astNode->leftNode, $currentNode, $pathEvaluationContext);
-        $rightExpressionResult = $this->evaluateLogicalExpressionNode($astNode->rightNode, $currentNode, $pathEvaluationContext);
+        $leftExpressionResult = $this->evaluateLogicalExpressionNode($astNode->leftNode, $currentNode, $evaluationContext);
+        $rightExpressionResult = $this->evaluateLogicalExpressionNode($astNode->rightNode, $currentNode, $evaluationContext);
 
         if (
             $astNode instanceof EqualNode
@@ -802,7 +866,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
         throw new JsonPathEvaluationException(
             'Unexpected binary operator node ' . $astNode->token->value,
             $astNode->token->position,
-            $pathEvaluationContext->expression,
+            $evaluationContext->expression,
             1701659368
         );
     }
@@ -868,6 +932,34 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
 
         $length = count($array);
 
+        [$lowerBound, $upperBound] = $this->calculateArraySliceBounds($start, $end, $step, $length);
+
+        if ($step > 0) {
+            $i = $lowerBound;
+            while ($i < $upperBound) {
+                $result[$i] = $array[$i];
+                $i += $step;
+            }
+        } else {
+            $i = $upperBound;
+            while ($lowerBound < $i) {
+                $result[$i] = $array[$i];
+                $i += $step;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array{int, int, int, int}
+     */
+    private function calculateArraySliceBounds(?int $start, ?int $end, int $step, int $length): array
+    {
+        if ($step === 0) {
+            return [0, 0, 0, 0];
+        }
+
         if ($start === null) {
             $start = ($step > 0) ? 0 : $length - 1;
         }
@@ -892,21 +984,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
             $lowerBound = min(max($end, -1), $length - 1);
         }
 
-        if ($step > 0) {
-            $i = $lowerBound;
-            while ($i < $upperBound) {
-                $result[$i] = $array[$i];
-                $i += $step;
-            }
-        } else {
-            $i = $upperBound;
-            while ($lowerBound < $i) {
-                $result[$i] = $array[$i];
-                $i += $step;
-            }
-        }
-
-        return $result;
+        return [$lowerBound, $upperBound, $start, $end];
     }
 
     private function regexFunction(AbstractValueType $string, AbstractValueType $regexp, bool $fullMatch): LogicalFalse|LogicalTrue

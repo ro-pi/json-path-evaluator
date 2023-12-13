@@ -26,7 +26,7 @@ interface JsonPathEvaluatorInterface
      * @param array<int, mixed> $values
      * @throws JsonPathEvaluatorException
      */
-    function setValues(array|\stdClass $data, string $path, array $values): void;
+    function setValues(array|\stdClass &$data, string $path, array $values, bool $createNonExistent = false): void;
 
     /**
      * @param \stdClass|array<scalar, mixed> $data
