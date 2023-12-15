@@ -58,28 +58,36 @@ $data = json_decode('{ "store": {
 $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
 
 echo "Get authors of all books in the store:\n";
-echo json_encode($evaluator->getValues($data, '$.store.book[*].author'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getValues($data, '$.store.book[*].author');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 echo "Get all things in store, which are some books and a red bicycle:\n";
-echo json_encode($evaluator->getValues($data, '$.store.*'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getValues($data, '$.store.*');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 echo "Get the prices of everything in the store:\n";
-echo json_encode($evaluator->getValues($data, '$.store..price'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getValues($data, '$.store..price');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 echo "Get the last book in order:\n";
-echo json_encode($evaluator->getValues($data, '$..book[-1]'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getValues($data, '$..book[-1]');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 echo "Get the first two books with union operator:\n";
-echo json_encode($evaluator->getValues($data, '$..book[0,1]'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getValues($data, '$..book[0,1]');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 echo "Get the first two books with array slice operator:\n";
-echo json_encode($evaluator->getValues($data, '$..book[:2]'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getValues($data, '$..book[:2]');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 echo "Get all books with an ISBN number:\n";
-echo json_encode($evaluator->getValues($data, '$..book[?@.isbn]'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getValues($data, '$..book[?@.isbn]');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 echo "Get all books cheaper than 10:\n";
-echo json_encode($evaluator->getValues($data, '$..book[?@.price<10]'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getValues($data, '$..book[?@.price<10]');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 ```
 The above example will output:
 ```
@@ -213,28 +221,36 @@ $data = json_decode('{ "store": {
 $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
 
 echo "Get authors of all books in the store:\n";
-echo json_encode($evaluator->getPaths($data, '$.store.book[*].author'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getPaths($data, '$.store.book[*].author');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 echo "Get all things in store, which are some books and a red bicycle:\n";
-echo json_encode($evaluator->getPaths($data, '$.store.*'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getPaths($data, '$.store.*');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 echo "Get the prices of everything in the store:\n";
-echo json_encode($evaluator->getPaths($data, '$.store..price'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getPaths($data, '$.store..price');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 echo "Get the last book in order:\n";
-echo json_encode($evaluator->getPaths($data, '$..book[-1]'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getPaths($data, '$..book[-1]');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 echo "Get the first two books with union operator:\n";
-echo json_encode($evaluator->getPaths($data, '$..book[0,1]'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getPaths($data, '$..book[0,1]');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 echo "Get the first two books with array slice operator:\n";
-echo json_encode($evaluator->getPaths($data, '$..book[:2]'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getPaths($data, '$..book[:2]');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 echo "Get all books with an ISBN number:\n";
-echo json_encode($evaluator->getPaths($data, '$..book[?@.isbn]'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getPaths($data, '$..book[?@.isbn]');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 echo "Get all books cheaper than 10:\n";
-echo json_encode($evaluator->getPaths($data, '$..book[?@.price<10]'), JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getPaths($data, '$..book[?@.price<10]');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
 ```
 The above example will output:
 ```
