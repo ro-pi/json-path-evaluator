@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Ropi\JsonPathEvaluator\Tests\Functional\JsonPath;
 
 use Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException;
+use Ropi\JsonPathEvaluator\NonExistentPathBehavior;
 use Ropi\JsonPathEvaluator\Parser\Exception\ParseException;
 use Ropi\JsonPathEvaluator\Types\AbstractLogicalType;
 use Ropi\JsonPathEvaluator\Types\AbstractNodesType;
@@ -364,6 +365,529 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             ]',
             'Expected all member values and array elements contained in the input value'
         );
+    }
+
+    /**
+     * @throws JsonPathEvaluatorException
+     * @throws \ReflectionException
+     */
+    public function testSetValues(): void
+    {
+        $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
+
+        $data = json_decode('{ "store": {
+               "book": [
+                 { "category": "reference",
+                   "author": "Nigel Rees",
+                   "title": "Sayings of the Century",
+                   "price": 8.95
+                 },
+                 { "category": "fiction",
+                   "author": "Herman Melville",
+                   "title": "Moby Dick",
+                   "isbn": "0-553-21311-3",
+                   "price": 8.99
+                 }
+               ],
+               "bicycle": {
+                 "color": "red",
+                 "price": 399
+               }
+             }
+           }');
+
+        $evaluator->setValues($data, '$..price', []);
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{ "store": {
+               "book": [
+                 { "category": "reference",
+                   "author": "Nigel Rees",
+                   "title": "Sayings of the Century",
+                   "price": 8.95
+                 },
+                 { "category": "fiction",
+                   "author": "Herman Melville",
+                   "title": "Moby Dick",
+                   "isbn": "0-553-21311-3",
+                   "price": 8.99
+                 }
+               ],
+               "bicycle": {
+                 "color": "red",
+                 "price": 399
+               }
+             }
+           }',
+            'No value to set'
+        );
+
+        $evaluator->setValues($data, '$..nonExistent', [1]);
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{ "store": {
+               "book": [
+                 { "category": "reference",
+                   "author": "Nigel Rees",
+                   "title": "Sayings of the Century",
+                   "price": 8.95
+                 },
+                 { "category": "fiction",
+                   "author": "Herman Melville",
+                   "title": "Moby Dick",
+                   "isbn": "0-553-21311-3",
+                   "price": 8.99
+                 }
+               ],
+               "bicycle": {
+                 "color": "red",
+                 "price": 399
+               }
+             }
+           }',
+            'Set non existent'
+        );
+
+        $evaluator->setValues($data, '$..price', [1]);
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{
+                "store": {
+                    "book": [
+                        {
+                            "category": "reference",
+                            "author": "Nigel Rees",
+                            "title": "Sayings of the Century",
+                            "price": 1
+                        },
+                        {
+                            "category": "fiction",
+                            "author": "Herman Melville",
+                            "title": "Moby Dick",
+                            "isbn": "0-553-21311-3",
+                            "price": 1
+                        }
+                    ],
+                    "bicycle": {
+                        "color": "red",
+                        "price": 1
+                    }
+                }
+            }',
+            'One value to set'
+        );
+
+        $evaluator->setValues($data, '$..price', [1, 2, 3]);
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{
+                "store": {
+                    "book": [
+                        {
+                            "category": "reference",
+                            "author": "Nigel Rees",
+                            "title": "Sayings of the Century",
+                            "price": 1
+                        },
+                        {
+                            "category": "fiction",
+                            "author": "Herman Melville",
+                            "title": "Moby Dick",
+                            "isbn": "0-553-21311-3",
+                            "price": 2
+                        }
+                    ],
+                    "bicycle": {
+                        "color": "red",
+                        "price": 3
+                    }
+                }
+            }',
+            'Multiple values to set'
+        );
+
+        $evaluator->setValues($data, '$.store.*.color', ["white"]);
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{
+                "store": {
+                    "book": [
+                        {
+                            "category": "reference",
+                            "author": "Nigel Rees",
+                            "title": "Sayings of the Century",
+                            "price": 1
+                        },
+                        {
+                            "category": "fiction",
+                            "author": "Herman Melville",
+                            "title": "Moby Dick",
+                            "isbn": "0-553-21311-3",
+                            "price": 2
+                        }
+                    ],
+                    "bicycle": {
+                        "color": "white",
+                        "price": 3
+                    }
+                }
+            }',
+            'Wildcard set'
+        );
+
+        $evaluator->setValues($data, '$..book[1:].price', [10]);
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{
+                "store": {
+                    "book": [
+                        {
+                            "category": "reference",
+                            "author": "Nigel Rees",
+                            "title": "Sayings of the Century",
+                            "price": 1
+                        },
+                        {
+                            "category": "fiction",
+                            "author": "Herman Melville",
+                            "title": "Moby Dick",
+                            "isbn": "0-553-21311-3",
+                            "price": 10
+                        }
+                    ],
+                    "bicycle": {
+                        "color": "white",
+                        "price": 3
+                    }
+                }
+            }',
+            'Array slice set'
+        );
+
+        $evaluator->setValues($data, '$..book[?@.price > 1].price', [2]);
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{
+                "store": {
+                    "book": [
+                        {
+                            "category": "reference",
+                            "author": "Nigel Rees",
+                            "title": "Sayings of the Century",
+                            "price": 1
+                        },
+                        {
+                            "category": "fiction",
+                            "author": "Herman Melville",
+                            "title": "Moby Dick",
+                            "isbn": "0-553-21311-3",
+                            "price": 2
+                        }
+                    ],
+                    "bicycle": {
+                        "color": "white",
+                        "price": 3
+                    }
+                }
+            }',
+            'Set all book prices greater than 1'
+        );
+
+        $evaluator->setValues($data, '$', ['root']);
+
+        $this->assertEquals('root', $data, 'Set root');
+    }
+
+    /**
+     * @throws JsonPathEvaluatorException
+     * @throws \ReflectionException
+     */
+    public function testSetValuesCreateNonExistent(): void
+    {
+        $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
+
+        $data = json_decode('{ "store": {
+               "book": [
+                 { "category": "reference",
+                   "author": "Nigel Rees",
+                   "title": "Sayings of the Century",
+                   "price": 8.95
+                 },
+                 { "category": "fiction",
+                   "author": "Herman Melville",
+                   "title": "Moby Dick",
+                   "isbn": "0-553-21311-3",
+                   "price": 8.99
+                 }
+               ],
+               "bicycle": {
+                 "color": "red",
+                 "price": 399
+               }
+             }
+           }');
+
+        $evaluator->setValues($data, '$..stdClass', [], NonExistentPathBehavior::CreateStdClass);
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{
+                "store": {
+                    "book": [
+                        {
+                            "category": "reference",
+                            "author": "Nigel Rees",
+                            "title": "Sayings of the Century",
+                            "price": 8.95,
+                            "stdClass": {}
+                        },
+                        {
+                            "category": "fiction",
+                            "author": "Herman Melville",
+                            "title": "Moby Dick",
+                            "isbn": "0-553-21311-3",
+                            "price": 8.99,
+                            "stdClass": {}
+                        }
+                    ],
+                    "bicycle": {
+                        "color": "red",
+                        "price": 399,
+                        "stdClass": {}
+                    },
+                    "stdClass": {}
+                },
+                "stdClass": {}
+            }',
+            'Create stdClass on non existent path'
+        );
+
+        $evaluator->setValues($data, '$.store.book[0].array', [], NonExistentPathBehavior::CreateArray);
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{
+                "store": {
+                    "book": [
+                        {
+                            "category": "reference",
+                            "author": "Nigel Rees",
+                            "title": "Sayings of the Century",
+                            "price": 8.95,
+                            "stdClass": {},
+                            "array": []
+                        },
+                        {
+                            "category": "fiction",
+                            "author": "Herman Melville",
+                            "title": "Moby Dick",
+                            "isbn": "0-553-21311-3",
+                            "price": 8.99,
+                            "stdClass": {}
+                        }
+                    ],
+                    "bicycle": {
+                        "color": "red",
+                        "price": 399,
+                        "stdClass": {}
+                    },
+                    "stdClass": {}
+                },
+                "stdClass": {}
+            }',
+            'Create array on non existent path'
+        );
+
+        $evaluator->setValues($data, '$.store2.book[0]', [], NonExistentPathBehavior::CreateStdClass);
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{
+                "store": {
+                    "book": [
+                        {
+                            "category": "reference",
+                            "author": "Nigel Rees",
+                            "title": "Sayings of the Century",
+                            "price": 8.95,
+                            "stdClass": {},
+                            "array": []
+                        },
+                        {
+                            "category": "fiction",
+                            "author": "Herman Melville",
+                            "title": "Moby Dick",
+                            "isbn": "0-553-21311-3",
+                            "price": 8.99,
+                            "stdClass": {}
+                        }
+                    ],
+                    "bicycle": {
+                        "color": "red",
+                        "price": 399,
+                        "stdClass": {}
+                    },
+                    "stdClass": {}
+                },
+                "store2": {
+                    "book": [
+                        {}
+                    ]
+                },
+                "stdClass": {}
+            }',
+            'Create empty book in store2'
+        );
+
+        $data = new \stdClass();
+        $evaluator->setValues($data, '$.my.deep.path', [10], NonExistentPathBehavior::CreateStdClass);
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{
+                "my": {
+                    "deep": {
+                        "path": 10
+                    }
+                }
+            }',
+            'Create deep path and set value'
+        );
+
+        $data = new \stdClass();
+        $evaluator->setValues($data, '$.prices[*].value', [10], NonExistentPathBehavior::CreateStdClass);
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{
+                "prices": {}
+            }',
+            'Wildcard can not be created dynamically'
+        );
+
+        $data = new \stdClass();
+        $evaluator->setValues($data, '$.prices[?@.value].value', [10], NonExistentPathBehavior::CreateStdClass);
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{
+                "prices": {}
+            }',
+            'Filter expression can not be created dynamically'
+        );
+    }
+
+    /**
+     * @throws JsonPathEvaluatorException
+     * @throws \ReflectionException
+     */
+    public function testDeleteValues(): void
+    {
+        $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
+
+        $data = json_decode('{ "store": {
+               "book": [
+                 { "category": "reference",
+                   "author": "Nigel Rees",
+                   "title": "Sayings of the Century",
+                   "price": 8.95
+                 },
+                 { "category": "fiction",
+                   "author": "Herman Melville",
+                   "title": "Moby Dick",
+                   "isbn": "0-553-21311-3",
+                   "price": 8.99
+                 }
+               ],
+               "bicycle": {
+                 "color": "red",
+                 "price": 399
+               }
+             }
+           }');
+
+        $evaluator->deleteValues($data, '$..price');
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{ "store": {
+               "book": [
+                 { "category": "reference",
+                   "author": "Nigel Rees",
+                   "title": "Sayings of the Century"
+                 },
+                 { "category": "fiction",
+                   "author": "Herman Melville",
+                   "title": "Moby Dick",
+                   "isbn": "0-553-21311-3"
+                 }
+               ],
+               "bicycle": {
+                 "color": "red"
+               }
+             }
+           }',
+            'Delete all prices'
+        );
+
+        $evaluator->deleteValues($data, '$.store.bicycle');
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{ "store": {
+               "book": [
+                 { "category": "reference",
+                   "author": "Nigel Rees",
+                   "title": "Sayings of the Century"
+                 },
+                 { "category": "fiction",
+                   "author": "Herman Melville",
+                   "title": "Moby Dick",
+                   "isbn": "0-553-21311-3"
+                 }
+               ]
+             }
+           }',
+            'Delete bicycle'
+        );
+
+        $evaluator->deleteValues($data, '$.store.book[1:]');
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{ "store": {
+               "book": [
+                 { "category": "reference",
+                   "author": "Nigel Rees",
+                   "title": "Sayings of the Century"
+                 }
+               ]
+             }
+           }',
+            'Delete array slice'
+        );
+
+        $evaluator->deleteValues($data, '$.store.book[*]');
+
+        $this->assertJsonStringEqualsJsonString(
+            (string)json_encode($data),
+            '{ "store": {
+               "book": []
+             }
+           }',
+            'Delete wildcard'
+        );
+
+        $evaluator->deleteValues($data, '$');
+
+        $this->assertNull($data, 'Delete root');
     }
 
     /**
@@ -1445,12 +1969,67 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
                 }
 
                 $this->assertNotNull($parseException ?? null);
+
+                /** @var ParseException $parseException */
                 $this->assertInstanceOf(JsonPathEvaluatorException::class, $parseException);
             } else {
                 $this->assertJsonPathResult(
                     $evaluator->getValues($data, $test->selector),
                     (string)json_encode($test->result),
                     $test->name
+                );
+            }
+        }
+    }
+
+    /**
+     * @throws \ReflectionException
+     * @throws \Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException
+     */
+    public function testComplianceAssociativeArray(): void
+    {
+        $testSuite = json_decode((string) file_get_contents(__DIR__ . '/../../Resources/jsonpath-compliance-test-suite/cts.json'), true);
+        assert(is_array($testSuite));
+
+        $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
+
+        foreach ($testSuite['tests'] as $test) {
+            /** @var array<string, array|string> $test */
+
+            /** @var array<scalar, mixed> $data */
+            $data = isset($test['document'] ) && is_array($test['document']) ? $test['document'] : [];
+
+            if (
+                in_array($test['name'], [
+                    'basic, no leading whitespace',
+                    'basic, no trailing whitespace'
+                ])
+            ) {
+                continue;
+            }
+
+            /** @var string $selector */
+            $selector = $test['selector'];
+
+            /** @var string $testName */
+            $testName = $test['name'];
+
+            if ($test['invalid_selector'] ?? false) {
+                try {
+                    $evaluator->getValues($data, $selector);
+                } catch (ParseException $parseException) {
+
+                }
+
+                $this->assertNotNull($parseException ?? null, $testName);
+
+                /** @var ParseException $parseException */
+                $this->assertInstanceOf(JsonPathEvaluatorException::class, $parseException, $testName);
+            } else {
+                $this->assertJsonPathResult(
+                    $evaluator->getValues($data, $selector),
+                    (string)json_encode($test['result']),
+                    $testName
                 );
             }
         }

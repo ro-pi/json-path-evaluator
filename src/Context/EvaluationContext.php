@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Ropi\JsonPathEvaluator\Context;
 
+use Ropi\JsonPathEvaluator\NonExistentPathBehavior;
+
 class EvaluationContext
 {
     /**
@@ -19,7 +21,7 @@ class EvaluationContext
     public function __construct(
         public mixed &$rootData,
         public readonly string $expression,
-        public readonly bool $createNonExistent,
+        public readonly NonExistentPathBehavior $nonExistentPathBehavior,
     ) {
         $this->rootNode = new Node($this->rootData, ['']);
     }

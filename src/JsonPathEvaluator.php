@@ -100,16 +100,20 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
      */
     public function getValues(array|\stdClass $data, string $path): array
     {
-        return $this->evaluate($data, $path, false)->getNodeValues();
+        return $this->evaluate($data, $path, NonExistentPathBehavior::Skip)->getNodeValues();
     }
 
     /**
      * @throws JsonPathEvaluatorException
      * @throws \ReflectionException
      */
-    public function setValues(array|\stdClass &$data, string $path, array $values, bool $createNonExistent = false): void
-    {
-        $nodeList = $this->evaluate($data, $path, $createNonExistent);
+    public function setValues(
+        array|\stdClass &$data,
+        string $path,
+        array $values,
+        NonExistentPathBehavior $nonExistentPathBehavior = NonExistentPathBehavior::Skip
+    ): void {
+        $nodeList = $this->evaluate($data, $path, $nonExistentPathBehavior);
 
         if ($values) {
             $newValuePointer = 0;
@@ -141,9 +145,9 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
      * @throws JsonPathEvaluatorException
      * @throws \ReflectionException
      */
-    public function deleteValues(array|\stdClass $data, string $path): void
+    public function deleteValues(array|\stdClass &$data, string $path): void
     {
-        $nodeList = $this->evaluate($data, $path, false);
+        $nodeList = $this->evaluate($data, $path, NonExistentPathBehavior::Skip);
 
         foreach ($nodeList->getNodes() as $node) {
             $currentData =& $data;
@@ -151,6 +155,11 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
 
             foreach ($node->pathSegments as $pathSegmentIndex => $pathSegment) {
                 if ($pathSegment === '') {
+                    if ($pathSegmentIndex >= $lastPathSegmentIndex) {
+                        $data = null;
+                        break;
+                    }
+
                     continue;
                 }
 
@@ -177,7 +186,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
      */
     public function getPaths(array|\stdClass $data, string $path): array
     {
-        $nodeList = $this->evaluate($data, $path, false);
+        $nodeList = $this->evaluate($data, $path, NonExistentPathBehavior::Skip);
 
         $paths = [];
 
@@ -247,9 +256,12 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
      * @throws \ReflectionException
      * @throws JsonPathEvaluatorException
      */
-    public function evaluate(array|\stdClass &$data, string $path, bool $createNonExistent): NodeList
-    {
-        $evaluationContext = new EvaluationContext($data, $path, $createNonExistent);
+    public function evaluate(
+        array|\stdClass &$data,
+        string $path,
+        NonExistentPathBehavior $nonExistentPathBehavior
+    ): NodeList {
+        $evaluationContext = new EvaluationContext($data, $path, $nonExistentPathBehavior);
 
         return $this->evaluateJsonPathExpression(
             $this->getParser()->parse($path),
@@ -350,7 +362,10 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
                 if ($childNodeValue instanceof \stdClass || is_array($childNodeValue)) {
                     $childNode = $evaluationContext->getChildNode($currentNode, $segment, $childNodeValue);
 
-                    if ($evaluationContext->createNonExistent && $evaluationContext->nodeCreatedDynamically($childNode)) {
+                    if (
+                        $evaluationContext->nonExistentPathBehavior !== NonExistentPathBehavior::Skip
+                        && $evaluationContext->nodeCreatedDynamically($childNode)
+                    ) {
                         continue;
                     }
 
@@ -402,11 +417,14 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
                 $createdDynamically = false;
 
                 if (!property_exists($currentNode->value, $segment)) {
-                    if (!$evaluationContext->createNonExistent) {
+                    if ($evaluationContext->nonExistentPathBehavior === NonExistentPathBehavior::Skip) {
                         return $resultNodeList;
                     }
 
-                    $currentNode->value->{$segment} = new \stdClass();
+                    $currentNode->value->{$segment} = $evaluationContext->nonExistentPathBehavior === NonExistentPathBehavior::CreateArray
+                        ? []
+                        : new \stdClass();
+
                     $createdDynamically = true;
                 }
 
@@ -422,7 +440,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
                 if (is_int($segment) && $segment < 0) {
                     if (count($currentNode->value) >= abs($segment)) {
                         [$segment] = $this->calculateArraySliceBounds($segment, $segment + 1, 1, count($currentNode->value));
-                    } elseif ($evaluationContext->createNonExistent) {
+                    } elseif ($evaluationContext->nonExistentPathBehavior !== NonExistentPathBehavior::Skip) {
                         $segment = 0;
                     }
                 }
@@ -430,11 +448,14 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
                 $createdDynamically = false;
 
                 if (!array_key_exists($segment, $currentNode->value)) {
-                    if (!$evaluationContext->createNonExistent) {
+                    if ($evaluationContext->nonExistentPathBehavior === NonExistentPathBehavior::Skip) {
                         return $resultNodeList;
                     }
 
-                    $currentNode->value[$segment] = new \stdClass();
+                    $currentNode->value[$segment] = $evaluationContext->nonExistentPathBehavior === NonExistentPathBehavior::CreateArray
+                        ? []
+                        : new \stdClass();
+
                     $createdDynamically = true;
                 }
 
@@ -484,7 +505,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
 
                 $createdDynamically = false;
 
-                if (!$slice && $evaluationContext->createNonExistent) {
+                if (!$slice && $evaluationContext->nonExistentPathBehavior !== NonExistentPathBehavior::Skip) {
                     [, , $start, $end] = $this->calculateArraySliceBounds(
                         $start,
                         $end,
@@ -504,7 +525,10 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
 
                     $i = $start;
                     while ($i < $end) {
-                        $slice[$i] = new \stdClass();
+                        $slice[$i] = $evaluationContext->nonExistentPathBehavior === NonExistentPathBehavior::CreateArray
+                            ? []
+                            : new \stdClass();
+
                         $i += $step;
                     }
 
@@ -788,11 +812,13 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
                 $rightExpressionResult = $rightExpressionResult->toComparableValue(true);
             }
 
-            if (is_object($leftExpressionResult) && is_object($rightExpressionResult)) {
-                $comparisonResult = ($leftExpressionResult == $rightExpressionResult);
-            } elseif (
-                (is_int($leftExpressionResult) || is_float($leftExpressionResult))
-                && (is_int($rightExpressionResult) || is_float($rightExpressionResult))
+            if (
+                (is_object($leftExpressionResult) && is_object($rightExpressionResult))
+                || (is_array($leftExpressionResult) && is_array($rightExpressionResult))
+                || (
+                    (is_int($leftExpressionResult) || is_float($leftExpressionResult))
+                    && (is_int($rightExpressionResult) || is_float($rightExpressionResult))
+                )
             ) {
                 $comparisonResult = ($leftExpressionResult == $rightExpressionResult);
             } else {

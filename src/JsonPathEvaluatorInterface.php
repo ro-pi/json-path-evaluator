@@ -26,11 +26,16 @@ interface JsonPathEvaluatorInterface
      * @param array<int, mixed> $values
      * @throws JsonPathEvaluatorException
      */
-    function setValues(array|\stdClass &$data, string $path, array $values, bool $createNonExistent = false): void;
+    function setValues(
+        array|\stdClass &$data,
+        string $path,
+        array $values,
+        NonExistentPathBehavior $nonExistentPathBehavior = NonExistentPathBehavior::Skip
+    ): void;
 
     /**
      * @param \stdClass|array<scalar, mixed> $data
      * @throws JsonPathEvaluatorException
      */
-    function deleteValues(array|\stdClass $data, string $path): void;
+    function deleteValues(array|\stdClass &$data, string $path): void;
 }
