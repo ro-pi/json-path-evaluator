@@ -19,8 +19,8 @@ composer require ropi/json-path-evaluator
 ```
 
 ## Get values
-The following example shows how to get matched values.\
-The result is always an array of matches. If there are no matches, an empty array is returned.
+The following example shows how to get values that match a JSONPath.\
+The result is always an array of values that match the JSONPath. If there are no matches, an empty array is returned.
 ```php
 <?php
 $data = json_decode('{ "store": {
@@ -226,7 +226,7 @@ Get all books where ISBN ends with 1, 2 or 3 (Regular Expression):
 ```
 
 ## Get paths
-The following example shows how to get paths of matched values, where each path is represented as normalized JSONPath according to section 2.7 of [JSONPath internet draft](https://datatracker.ietf.org/doc/draft-ietf-jsonpath-base/21/).\
+The following example shows how to get value paths that match a JSONPath, where each value path is represented as normalized JSONPath according to section 2.7 of [JSONPath internet draft](https://datatracker.ietf.org/doc/draft-ietf-jsonpath-base/21/).\
 The result is always an array of matched paths. If there are no matches, an empty array is returned.
 ```php
 <?php
