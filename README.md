@@ -536,3 +536,37 @@ Delete all books that are more expensive than 9 euros:
 }
 
 ```
+## Custom function extensions
+The following example shows how to register custom function extensions according to section 2.4 of [JSONPath internet draft](https://datatracker.ietf.org/doc/draft-ietf-jsonpath-base/21/).
+```php
+<?php
+$evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
+
+$data = json_decode('{
+    "values": [
+        {"property": "valueA"},
+        {"property": "valueB"}
+    ]
+}');
+
+$evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
+$evaluator->registerFunction('myFunction', function(\Ropi\JsonPathEvaluator\Types\AbstractValueType $parameter1) {
+    if (!$parameter1 instanceof \Ropi\JsonPathEvaluator\Types\JsonValue) {
+        return new \Ropi\JsonPathEvaluator\Types\LogicalFalse();
+    }
+
+    return $parameter1->getValue() === 'valueB'
+        ? new \Ropi\JsonPathEvaluator\Types\LogicalTrue()
+        : new \Ropi\JsonPathEvaluator\Types\LogicalFalse();
+});
+
+$result = $evaluator->getValues($data, '$.values[?myFunction(@.property)].property');
+echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
+```
+The above example will output:
+```
+[
+    "valueB"
+]
+
+```
