@@ -788,7 +788,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
      * @throws JsonPathEvaluatorException
      * @throws \ReflectionException
      */
-    public function testDeleteValues(): void
+    public function testDeletePaths(): void
     {
         $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
 
@@ -813,7 +813,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
              }
            }');
 
-        $evaluator->deleteValues($data, '$..price');
+        $evaluator->deletePaths($data, '$..price');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -837,7 +837,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'Delete all prices'
         );
 
-        $evaluator->deleteValues($data, '$.store.bicycle');
+        $evaluator->deletePaths($data, '$.store.bicycle');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -858,7 +858,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'Delete bicycle'
         );
 
-        $evaluator->deleteValues($data, '$.store.book[1:]');
+        $evaluator->deletePaths($data, '$.store.book[1:]');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -874,7 +874,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'Delete array slice'
         );
 
-        $evaluator->deleteValues($data, '$.store.book[*]');
+        $evaluator->deletePaths($data, '$.store.book[*]');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -885,7 +885,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'Delete wildcard'
         );
 
-        $evaluator->deleteValues($data, '$');
+        $evaluator->deletePaths($data, '$');
 
         $this->assertNull($data, 'Delete root');
     }

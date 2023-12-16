@@ -145,7 +145,7 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
      * @throws JsonPathEvaluatorException
      * @throws \ReflectionException
      */
-    public function deleteValues(array|\stdClass &$data, string $path): void
+    public function deletePaths(array|\stdClass &$data, string $path): void
     {
         $nodeList = $this->evaluate($data, $path, NonExistentPathBehavior::Skip);
 

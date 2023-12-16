@@ -11,6 +11,15 @@ This implementation passes all compliance tests of [JSONPath Compliance Test Sui
 * ext-intl
 * ext-mbstring
 
+## Table of contents
+* [Installation](#installation)
+* [Get values](#get-values)
+* [Get paths](#get-paths)
+* [Set values](#set-values)
+* [Set values and create non-existent paths](#set-values-and-create-non-existent-paths)
+* [Delete paths](#delete-paths)
+* [Custom function extensions](#custom-function-extensions)
+
 ## Installation
 The library can be installed from a command line interface by using [composer](https://getcomposer.org/).
 
@@ -493,8 +502,9 @@ array(1) {
 }
 
 ```
-## Delete values
-The following example shows how to delete/remove/unset values.
+## Delete paths
+The following example shows how to delete/remove/unset paths that match a JSONPath.
+
 ```php
 <?php
 $data = json_decode('{ "store": {
@@ -535,7 +545,7 @@ $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
 
 echo "Delete all books that are more expensive than 9 euros:\n";
 
-$evaluator->deleteValues($data, '$.store.book[@.price > 9]');
+$evaluator->deletePaths($data, '$.store.book[@.price > 9]');
 
 echo json_encode($data, JSON_PRETTY_PRINT) . "\n";
 ```

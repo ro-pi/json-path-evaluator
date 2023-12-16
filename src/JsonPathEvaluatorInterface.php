@@ -37,5 +37,5 @@ interface JsonPathEvaluatorInterface
      * @param \stdClass|array<scalar, mixed> $data
      * @throws JsonPathEvaluatorException
      */
-    function deleteValues(array|\stdClass &$data, string $path): void;
+    function deletePaths(array|\stdClass &$data, string $path): void;
 }
