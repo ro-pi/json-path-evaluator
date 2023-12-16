@@ -13,12 +13,13 @@ This implementation passes all compliance tests of [JSONPath Compliance Test Sui
 
 ## Table of contents
 * [Installation](#installation)
-* [Get values](#get-values)
-* [Get paths](#get-paths)
-* [Set values](#set-values)
-* [Set values and create non-existent paths](#set-values-and-create-non-existent-paths)
-* [Delete paths](#delete-paths)
-* [Custom function extensions](#custom-function-extensions)
+* [Examples](#examples)
+  * [Get values](#get-values)
+  * [Get paths](#get-paths)
+  * [Set values](#set-values)
+  * [Set values and create non-existent paths](#set-values-and-create-non-existent-paths)
+  * [Delete paths](#delete-paths)
+  * [Custom function extensions](#custom-function-extensions)
 
 ## Installation
 The library can be installed from a command line interface by using [composer](https://getcomposer.org/).
@@ -26,8 +27,9 @@ The library can be installed from a command line interface by using [composer](h
 ```
 composer require ropi/json-path-evaluator
 ```
+## Examples
 
-## Get values
+### Get values
 The following example shows how to get values that match a JSONPath.\
 The result is always an array of values that match the JSONPath. If there are no matches, an empty array is returned.
 ```php
@@ -234,7 +236,7 @@ Get all books where ISBN ends with 1, 2 or 3 (Regular Expression):
 
 ```
 
-## Get paths
+### Get paths
 The following example shows how to get value paths that match a JSONPath, where each value path is represented as normalized JSONPath according to section 2.7 of [JSONPath internet draft](https://datatracker.ietf.org/doc/draft-ietf-jsonpath-base/21/).\
 The result is always an array of matched paths. If there are no matches, an empty array is returned.
 ```php
@@ -321,7 +323,7 @@ Get all books cheaper than 10:
 ]
 
 ```
-## Set values
+### Set values
 The following example shows how to set/replace values.
 ```php
 <?php
@@ -453,7 +455,7 @@ Set prices alternately to 1, 2 and 3:
 }
 
 ```
-## Set values and create non-existent paths
+### Set values and create non-existent paths
 The following example shows how to set values on non-existent paths.
 ```php
 <?php
@@ -502,7 +504,7 @@ array(1) {
 }
 
 ```
-## Delete paths
+### Delete paths
 The following example shows how to delete/remove/unset paths that match a JSONPath.
 
 ```php
@@ -577,7 +579,7 @@ Delete all books that are more expensive than 9 euros:
 }
 
 ```
-## Custom function extensions
+### Custom function extensions
 The following example shows how to register custom function extensions according to section 2.4 of [JSONPath internet draft](https://datatracker.ietf.org/doc/draft-ietf-jsonpath-base/21/).
 ```php
 <?php
