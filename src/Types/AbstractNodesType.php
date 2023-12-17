@@ -26,7 +26,7 @@ abstract class AbstractNodesType implements JsonPathExpressionTypeInterface
     }
 
     /**
-     * @return array<mixed>
+     * @return list<mixed>
      */
     public function getNodeValues(): array
     {

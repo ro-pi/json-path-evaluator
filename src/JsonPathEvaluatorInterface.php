@@ -9,21 +9,21 @@ interface JsonPathEvaluatorInterface
 {
     /**
      * @param \stdClass|array<scalar, mixed> $data
-     * @return array<scalar, mixed>
+     * @return list<mixed>
      * @throws JsonPathEvaluatorException
      */
     function getValues(array|\stdClass $data, string $path): array;
 
     /**
      * @param \stdClass|array<scalar, mixed> $data
-     * @return array<int, string>
+     * @return list<string>
      * @throws JsonPathEvaluatorException
      */
     function getPaths(array|\stdClass $data, string $path): array;
 
     /**
      * @param \stdClass|array<scalar, mixed> $data
-     * @param array<int, mixed> $values
+     * @param list<mixed> $values
      * @throws JsonPathEvaluatorException
      */
     function setValues(
