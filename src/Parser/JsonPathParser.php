@@ -336,13 +336,15 @@ class JsonPathParser extends AbstractParser
 
         $this->consume(LeftParenthesisToken::class);
 
-        $argumentNodes = [
-            $this->parseFunctionArgument()
-        ];
+        $argumentNodes = [];
 
-        while ($this->getCurrentToken()::class === CommaToken::class) {
-            $this->consume(CommaToken::class);
+        if ($this->getCurrentToken()::class !== RightParenthesisToken::class) {
             $argumentNodes[] = $this->parseFunctionArgument();
+
+            while ($this->getCurrentToken()::class === CommaToken::class) {
+                $this->consume(CommaToken::class);
+                $argumentNodes[] = $this->parseFunctionArgument();
+            }
         }
 
         $this->consume(RightParenthesisToken::class);
