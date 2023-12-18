@@ -21,7 +21,6 @@ use Ropi\JsonPathEvaluator\Parser\Ast\LogicalExpression\FloatNode;
 use Ropi\JsonPathEvaluator\Parser\Ast\LogicalExpression\FunctionNode;
 use Ropi\JsonPathEvaluator\Parser\Ast\LogicalExpression\GreaterThanEqualNode;
 use Ropi\JsonPathEvaluator\Parser\Ast\LogicalExpression\GreaterThanNode;
-use Ropi\JsonPathEvaluator\Parser\Ast\LogicalExpression\IntegerNode;
 use Ropi\JsonPathEvaluator\Parser\Ast\LogicalExpression\LessThanEqualNode;
 use Ropi\JsonPathEvaluator\Parser\Ast\LogicalExpression\LessThanNode;
 use Ropi\JsonPathEvaluator\Parser\Ast\LogicalExpression\LogicalAndNode;
@@ -164,6 +163,7 @@ class JsonPathParser extends AbstractParser
         if ($this->getCurrentToken()::class === IntegerToken::class) {
             /** @var IntegerToken $integerToken */
             $integerToken = $this->consume(IntegerToken::class);
+            $this->ensureIntegerRange($integerToken);
         }
 
         if ($this->getCurrentToken()::class === ColonToken::class) {
@@ -192,6 +192,7 @@ class JsonPathParser extends AbstractParser
         $colonToken = $this->consume(ColonToken::class);
 
         if ($this->getCurrentToken()::class === IntegerToken::class) {
+            /** @var IntegerToken $endToken */
             $endToken = $this->consume(IntegerToken::class);
         }
 
@@ -200,16 +201,29 @@ class JsonPathParser extends AbstractParser
         }
 
         if ($this->getCurrentToken()::class === IntegerToken::class) {
+            /** @var IntegerToken $stepToken */
             $stepToken = $this->consume(IntegerToken::class);
         }
 
         $token = $startToken ?? $endToken ?? $stepToken ?? $colonToken;
 
+        if (isset($endToken)) {
+            $this->ensureIntegerRange($endToken);
+        } else {
+            $endToken = null;
+        }
+
+        if (isset($stepToken)) {
+            $this->ensureIntegerRange($stepToken);
+        } else {
+            $stepToken = null;
+        }
+
         return new ArraySliceSelectorNode(
             $token,
             $startToken?->value,
-            isset($endToken) ? $endToken->value : null,
-            isset($stepToken) ? $stepToken->value : null,
+            $endToken?->value,
+            $stepToken?->value,
         );
     }
 
@@ -308,11 +322,8 @@ class JsonPathParser extends AbstractParser
             NullToken::class,
         );
 
-        if ($token::class === IntegerToken::class) {
-            return new IntegerNode($token);
-        }
-
-        if ($token::class === FloatToken::class) {
+        if ($token::class === IntegerToken::class || $token::class === FloatToken::class) {
+            $this->ensureFloatRange($token);
             return new FloatNode($token);
         }
 
@@ -362,5 +373,39 @@ class JsonPathParser extends AbstractParser
         }
 
         return $this->parseLogicalExpression();
+    }
+
+    /**
+     * @throws SyntaxException
+     */
+    private function ensureIntegerRange(IntegerToken $token): void
+    {
+        $float = floatval($token->value);
+
+        if ($float > PHP_INT_MAX || $float < PHP_INT_MIN) {
+            throw new SyntaxException(
+                'Integer is out of range (possible range from ' . PHP_INT_MIN . ' to ' . PHP_INT_MAX . ')',
+                $token->position,
+                $this->getParsingExpression(),
+                1702863907
+            );
+        }
+    }
+
+    /**
+     * @throws SyntaxException
+     */
+    private function ensureFloatRange(FloatToken|IntegerToken $token): void
+    {
+        $float = floatval($token->value);
+
+        if ($float === INF || $float === -INF) {
+            throw new SyntaxException(
+                'Number is out of range (possible range from ' . PHP_FLOAT_MIN . ' to ' . PHP_FLOAT_MAX . ')',
+                $token->position,
+                $this->getParsingExpression(),
+                1702866702
+            );
+        }
     }
 }
