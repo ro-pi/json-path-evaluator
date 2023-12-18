@@ -712,10 +712,30 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
         }
 
         if ($astNode instanceof IntegerNode) {
+            if ($astNode->token->value > (string)PHP_INT_MAX || $astNode->token->value < (string)PHP_INT_MIN) {
+                throw new JsonPathEvaluationException(
+                    'Integer is out of range (possible range from ' . PHP_INT_MIN . ' to ' . PHP_INT_MAX . ')',
+                    $astNode->token->position,
+                    $evaluationContext->expression,
+                    1702863910
+                );
+            }
+
             return (int)$astNode->token->value;
         }
 
         if ($astNode instanceof FloatNode) {
+            $float = floatval($astNode->token->value);
+
+            if ($float === INF || $float === -INF) {
+                throw new JsonPathEvaluationException(
+                    'Float is out of range (possible range from ' . PHP_FLOAT_MIN . ' to ' . PHP_FLOAT_MAX . ')',
+                    $astNode->token->position,
+                    $evaluationContext->expression,
+                    1702863907
+                );
+            }
+
             return (float)$astNode->token->value;
         }
 
