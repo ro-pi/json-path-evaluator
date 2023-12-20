@@ -139,9 +139,6 @@ class JsonPathEvaluator implements JsonPathEvaluatorInterface
 
                 $numValuesSet++;
             } elseif ($nonExistentPathBehavior !== NonExistentPathBehavior::Skip) {
-                foreach ($nodeList->getNodes() as $n) {
-                    var_dump('$' . implode('.', $n->pathSegments));
-                }
                 $currentData = null;
                 $numValuesSet++;
             }
