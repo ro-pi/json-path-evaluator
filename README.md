@@ -33,7 +33,6 @@ composer require ropi/json-path-evaluator
 The following example shows how to get values that match a JSONPath.\
 The result is always an array of values that match the JSONPath. If there are no matches, an empty array is returned.
 ```php
-<?php
 $data = json_decode('{ "store": {
    "book": [
      { "category": "reference",
@@ -66,83 +65,42 @@ $data = json_decode('{ "store": {
  }
 }');
 
-
 $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
 
-
-echo "Get authors of all books in the store:\n";
-
 $result = $evaluator->getValues($data, '$.store.book[*].author');
-
-echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
-
-
-
-echo "Get the prices of everything in the store:\n";
+echo "Authors of all books in the store:\n" . json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 $result = $evaluator->getValues($data, '$.store..price');
-
-echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
-
-
-
-echo "Get the last book in order:\n";
+echo "Prices of everything in the store:\n" . json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 $result = $evaluator->getValues($data, '$..book[-1]');
-
-echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
-
-
-
-echo "Get the first two books with union operator:\n";
+echo "Last book in order:\n" . json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 $result = $evaluator->getValues($data, '$..book[0,1]');
-
-echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
-
-
-
-echo "Get the first two books with array slice operator:\n";
+echo "First two books with union operator:\n" . json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 $result = $evaluator->getValues($data, '$..book[:2]');
-
-echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
-
-
-
-echo "Get all books with an ISBN number:\n";
+echo "First two books with array slice operator:\n" . json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 $result = $evaluator->getValues($data, '$..book[?@.isbn]');
-
-echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
-
-
-
-echo "Get all books cheaper than 10:\n";
+echo "All books with an ISBN number:\n" . json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 $result = $evaluator->getValues($data, '$..book[?@.price<10]');
+echo "All books cheaper than 10:\n" . json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
-echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
-
-
-
-echo "Get all books where ISBN ends with 1, 2 or 3 (Regular Expression):\n";
-
-$result = $evaluator->getValues($data, '$..book[?search(@.isbn, "[1-3]$")]');
-
-echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
+$result = $evaluator->getValues($data, '$..book[?search(@.isbn, "[1-3]$")]'); // regular expression
+echo "All books where ISBN ends with 1, 2 or 3:\n" . json_encode($result, JSON_PRETTY_PRINT) . "\n";
 ```
 The above example will output:
 ```
-
-Get authors of all books in the store:
+Authors of all books in the store:
 [
     "Nigel Rees",
     "Evelyn Waugh",
     "Herman Melville",
     "J. R. R. Tolkien"
 ]
-Get the prices of everything in the store:
+Prices of everything in the store:
 [
     8.95,
     12.99,
@@ -150,7 +108,7 @@ Get the prices of everything in the store:
     22.99,
     399
 ]
-Get the last book in order:
+Last book in order:
 [
     {
         "category": "fiction",
@@ -160,7 +118,7 @@ Get the last book in order:
         "price": 22.99
     }
 ]
-Get the first two books with union operator:
+First two books with union operator:
 [
     {
         "category": "reference",
@@ -175,7 +133,7 @@ Get the first two books with union operator:
         "price": 12.99
     }
 ]
-Get the first two books with array slice operator:
+First two books with array slice operator:
 [
     {
         "category": "reference",
@@ -190,7 +148,7 @@ Get the first two books with array slice operator:
         "price": 12.99
     }
 ]
-Get all books with an ISBN number:
+All books with an ISBN number:
 [
     {
         "category": "fiction",
@@ -207,7 +165,7 @@ Get all books with an ISBN number:
         "price": 22.99
     }
 ]
-Get all books cheaper than 10:
+All books cheaper than 10:
 [
     {
         "category": "reference",
@@ -223,7 +181,7 @@ Get all books cheaper than 10:
         "price": 8.99
     }
 ]
-Get all books where ISBN ends with 1, 2 or 3 (Regular Expression):
+All books where ISBN ends with 1, 2 or 3:
 [
     {
         "category": "fiction",
@@ -233,14 +191,12 @@ Get all books where ISBN ends with 1, 2 or 3 (Regular Expression):
         "price": 8.99
     }
 ]
-
 ```
 
 ### Get paths
 The following example shows how to get value paths that match a JSONPath, where each value path is represented as normalized JSONPath according to section 2.7 of [JSONPath internet draft](https://datatracker.ietf.org/doc/draft-ietf-jsonpath-base/21/).\
 The result is always an array of matched paths. If there are no matches, an empty array is returned.
 ```php
-<?php
 $data = json_decode('{ "store": {
    "book": [
      { "category": "reference",
@@ -273,42 +229,27 @@ $data = json_decode('{ "store": {
  }
 }');
 
-
 $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
 
-
-echo "Get authors of all books in the store:\n";
-
 $result = $evaluator->getPaths($data, '$.store.book[*].author');
-
-echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
-
-
-
-echo "Get the prices of everything in the store:\n";
+echo "Paths of authors of all books in store:\n" . json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 $result = $evaluator->getPaths($data, '$.store..price');
-
-echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
-
-
-
-echo "Get all books cheaper than 10:\n";
+echo "Paths of prices of everything in the store:\n" . json_encode($result, JSON_PRETTY_PRINT) . "\n";
 
 $result = $evaluator->getPaths($data, '$..book[?@.price<10]');
-
-echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
+echo "Paths of all books cheaper than 10:\n" . json_encode($result, JSON_PRETTY_PRINT) . "\n";
 ```
 The above example will output:
 ```
-Get authors of all books in the store:
+Paths of authors of all books in store:
 [
     "$['store']['book'][0]['author']",
     "$['store']['book'][1]['author']",
     "$['store']['book'][2]['author']",
     "$['store']['book'][3]['author']"
 ]
-Get the prices of everything in the store:
+Paths of prices of everything in the store:
 [
     "$['store']['book'][0]['price']",
     "$['store']['book'][1]['price']",
@@ -316,17 +257,15 @@ Get the prices of everything in the store:
     "$['store']['book'][3]['price']",
     "$['store']['bicycle']['price']"
 ]
-Get all books cheaper than 10:
+Paths of all books cheaper than 10:
 [
     "$['store']['book'][0]",
     "$['store']['book'][2]"
 ]
-
 ```
 ### Set values
 The following example shows how to set/replace values.
 ```php
-<?php
 $data = json_decode('{ "store": {
    "book": [
      { "category": "reference",
@@ -359,27 +298,17 @@ $data = json_decode('{ "store": {
  }
 }');
 
-
 $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
 
+$numSet = $evaluator->setValues($data, '$..price', [10]);
+echo "Set all $numSet prices to 10:\n" . json_encode($data, JSON_PRETTY_PRINT) . "\n";
 
-echo "Set all prices to 10:\n";
-
-$evaluator->setValues($data, '$..price', [10]);
-
-echo json_encode($data, JSON_PRETTY_PRINT) . "\n";
-
-
-
-echo "Set prices alternately to 1, 2 and 3:\n";
-
-$evaluator->setValues($data, '$..price', [1, 2, 3]);
-
-echo json_encode($data, JSON_PRETTY_PRINT) . "\n";
+$numSet = $evaluator->setValues($data, '$..price', [1, 2, 3]);
+echo "Set all $numSet alternately to 1, 2 and 3:\n" . json_encode($data, JSON_PRETTY_PRINT) . "\n";
 ```
 The above example will output:
 ```
-Set all prices to 10:
+Set all 5 prices to 10:
 {
     "store": {
         "book": [
@@ -416,7 +345,7 @@ Set all prices to 10:
         }
     }
 }
-Set prices alternately to 1, 2 and 3:
+Set all 5 alternately to 1, 2 and 3:
 {
     "store": {
         "book": [
@@ -453,62 +382,49 @@ Set prices alternately to 1, 2 and 3:
         }
     }
 }
-
 ```
 ### Set values and create non-existent paths
 The following example shows how to set values on non-existent paths.
 ```php
-<?php
 $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
 
-
-echo "Create non-existent paths as stdClass objects:\n";
+// Create non-existent paths as stdClass objects
 $data = json_decode('{}');
-
-$evaluator->setValues($data, '$.deep.path.value', ["new-value"], \Ropi\JsonPathEvaluator\NonExistentPathBehavior::CreateStdClass);
-
+$evaluator->setValues($data, '$.deep.path.value', ["stdClassExample"], \Ropi\JsonPathEvaluator\NonExistentPathBehavior::CreateStdClass);
 var_dump($data) . "\n";
 
-
-
-echo "Create non-existent paths as arrays:\n";
+// Create non-existent paths as arrays
 $data = json_decode('[]');
-
-$evaluator->setValues($data, '$.deep.path.value', ["new-value"], \Ropi\JsonPathEvaluator\NonExistentPathBehavior::CreateArray);
-
+$evaluator->setValues($data, '$.deep.path.value', ["arrayExample"], \Ropi\JsonPathEvaluator\NonExistentPathBehavior::CreateArray);
 var_dump($data) . "\n";
 ```
 The above example will output:
 ```
-Create non-existent paths as stdClass objects:
 object(stdClass)#8 (1) {
   ["deep"]=>
   object(stdClass)#37 (1) {
     ["path"]=>
     object(stdClass)#32 (1) {
       ["value"]=>
-      string(9) "new-value"
+      string(15) "stdClassExample"
     }
   }
 }
-Create non-existent paths as arrays:
 array(1) {
   ["deep"]=>
   array(1) {
     ["path"]=>
     array(1) {
       ["value"]=>
-      string(9) "new-value"
+      string(12) "arrayExample"
     }
   }
 }
-
 ```
 ### Delete paths
 The following example shows how to delete/remove/unset paths that match a JSONPath.
 
 ```php
-<?php
 $data = json_decode('{ "store": {
    "book": [
      { "category": "reference",
@@ -541,19 +457,14 @@ $data = json_decode('{ "store": {
  }
 }');
 
-
 $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
 
-
-echo "Delete all books that are more expensive than 9 euros:\n";
-
-$evaluator->deletePaths($data, '$.store.book[@.price > 9]');
-
-echo json_encode($data, JSON_PRETTY_PRINT) . "\n";
+$numDeleted = $evaluator->deletePaths($data, '$.store.book[?@.price > 9]');
+echo "Deleted all $numDeleted books that are more expensive than 9:\n" . json_encode($data, JSON_PRETTY_PRINT) . "\n";
 ```
 The above example will output:
 ```
-Delete all books that are more expensive than 9 euros:
+Deleted all 2 books in store that are more expensive than 9:
 {
     "store": {
         "book": {
@@ -577,7 +488,6 @@ Delete all books that are more expensive than 9 euros:
         }
     }
 }
-
 ```
 ### Custom function extensions
 The following example shows how to register custom function extensions according to section 2.4 of [JSONPath internet draft](https://datatracker.ietf.org/doc/draft-ietf-jsonpath-base/21/).
@@ -605,13 +515,11 @@ $evaluator->registerFunction('myFunction', function(\Ropi\JsonPathEvaluator\Type
 });
 
 $result = $evaluator->getValues($data, '$.values[?myFunction(@.property)].property');
-
-echo json_encode($result, JSON_PRETTY_PRINT) . "\n";
+echo json_encode($result, JSON_PRETTY_PRINT);
 ```
 The above example will output:
 ```
 [
     "valueB"
 ]
-
 ```

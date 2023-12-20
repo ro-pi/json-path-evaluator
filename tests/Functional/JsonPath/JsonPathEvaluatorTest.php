@@ -396,7 +396,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
              }
            }');
 
-        $evaluator->setValues($data, '$..price', []);
+        $numSet = $evaluator->setValues($data, '$..price', []);
+
+        $this->assertEquals(0, $numSet, 'No value to set');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -423,7 +425,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'No value to set'
         );
 
-        $evaluator->setValues($data, '$..nonExistent', [1]);
+        $numSet = $evaluator->setValues($data, '$..nonExistent', [1]);
+
+        $this->assertEquals(0, $numSet, 'Set non existent');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -450,7 +454,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'Set non existent'
         );
 
-        $evaluator->setValues($data, '$..price', [1]);
+        $numSet = $evaluator->setValues($data, '$..price', [1]);
+
+        $this->assertEquals(3, $numSet, 'One value to set');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -480,7 +486,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'One value to set'
         );
 
-        $evaluator->setValues($data, '$..price', [1, 2, 3]);
+        $numSet = $evaluator->setValues($data, '$..price', [1, 2, 3]);
+
+        $this->assertEquals(3, $numSet, 'Multiple values to set');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -510,7 +518,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'Multiple values to set'
         );
 
-        $evaluator->setValues($data, '$.store.*.color', ["white"]);
+        $numSet = $evaluator->setValues($data, '$.store.*.color', ["white"]);
+
+        $this->assertEquals(1, $numSet, 'Wildcard set');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -540,7 +550,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'Wildcard set'
         );
 
-        $evaluator->setValues($data, '$..book[1:].price', [10]);
+        $numSet = $evaluator->setValues($data, '$..book[1:].price', [10]);
+
+        $this->assertEquals(1, $numSet, 'Array slice set');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -570,7 +582,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'Array slice set'
         );
 
-        $evaluator->setValues($data, '$..book[?@.price > 1].price', [2]);
+        $numSet = $evaluator->setValues($data, '$..book[?@.price > 1].price', [2]);
+
+        $this->assertEquals(1, $numSet, 'Set all book prices greater than 1');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -600,7 +614,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'Set all book prices greater than 1'
         );
 
-        $evaluator->setValues($data, '$', ['root']);
+        $numSet = $evaluator->setValues($data, '$', ['root']);
+
+        $this->assertEquals(1, $numSet, 'Set root');
 
         $this->assertEquals('root', $data, 'Set root');
     }
@@ -634,7 +650,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
              }
            }');
 
-        $evaluator->setValues($data, '$..stdClass', [], NonExistentPathBehavior::CreateStdClass);
+        $numSet = $evaluator->setValues($data, '$..stdClass', [], NonExistentPathBehavior::CreateStdClass);
+
+        $this->assertEquals(5, $numSet, 'Create stdClass on non existent path');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -646,7 +664,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
                             "author": "Nigel Rees",
                             "title": "Sayings of the Century",
                             "price": 8.95,
-                            "stdClass": {}
+                            "stdClass": null
                         },
                         {
                             "category": "fiction",
@@ -654,22 +672,25 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
                             "title": "Moby Dick",
                             "isbn": "0-553-21311-3",
                             "price": 8.99,
-                            "stdClass": {}
+                            "stdClass": null
                         }
                     ],
                     "bicycle": {
                         "color": "red",
                         "price": 399,
-                        "stdClass": {}
+                        "stdClass": null
                     },
-                    "stdClass": {}
+                    "stdClass": null
                 },
-                "stdClass": {}
+                "stdClass": null
             }',
             'Create stdClass on non existent path'
         );
 
-        $evaluator->setValues($data, '$.store.book[0].array', [], NonExistentPathBehavior::CreateArray);
+        $numSet = $evaluator->setValues($data, '$.store.book[0].array.test', [], NonExistentPathBehavior::CreateArray);
+
+        $this->assertEquals(1, $numSet, 'Create array on non existent path');
+        $this->assertIsArray($data->store->book[0]->array, 'Create array on non existent path');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -681,8 +702,10 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
                             "author": "Nigel Rees",
                             "title": "Sayings of the Century",
                             "price": 8.95,
-                            "stdClass": {},
-                            "array": []
+                            "stdClass": null,
+                            "array": {
+                                "test": null
+                            }
                         },
                         {
                             "category": "fiction",
@@ -690,22 +713,26 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
                             "title": "Moby Dick",
                             "isbn": "0-553-21311-3",
                             "price": 8.99,
-                            "stdClass": {}
+                            "stdClass": null
                         }
                     ],
                     "bicycle": {
                         "color": "red",
                         "price": 399,
-                        "stdClass": {}
+                        "stdClass": null
                     },
-                    "stdClass": {}
+                    "stdClass": null
                 },
-                "stdClass": {}
+                "stdClass": null
             }',
             'Create array on non existent path'
         );
 
-        $evaluator->setValues($data, '$.store2.book[0]', [], NonExistentPathBehavior::CreateStdClass);
+        $numSet = $evaluator->setValues($data, '$.store2.book[0]', [new \stdClass()], NonExistentPathBehavior::CreateStdClass);
+
+        $this->assertEquals(1, $numSet, 'Create empty book in store2');
+        $this->assertIsArray($data->store2->book, 'Create empty book in store2');
+        $this->assertIsObject($data->store2->book[0], 'Create empty book in store2');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -717,8 +744,11 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
                             "author": "Nigel Rees",
                             "title": "Sayings of the Century",
                             "price": 8.95,
-                            "stdClass": {},
-                            "array": []
+                            "stdClass": null,
+                            "array": null,
+                            "array": {
+                                "test": null
+                            }
                         },
                         {
                             "category": "fiction",
@@ -726,28 +756,30 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
                             "title": "Moby Dick",
                             "isbn": "0-553-21311-3",
                             "price": 8.99,
-                            "stdClass": {}
+                            "stdClass": null
                         }
                     ],
                     "bicycle": {
                         "color": "red",
                         "price": 399,
-                        "stdClass": {}
+                        "stdClass": null
                     },
-                    "stdClass": {}
+                    "stdClass": null
                 },
                 "store2": {
                     "book": [
                         {}
                     ]
                 },
-                "stdClass": {}
+                "stdClass": null
             }',
             'Create empty book in store2'
         );
 
         $data = new \stdClass();
-        $evaluator->setValues($data, '$.my.deep.path', [10], NonExistentPathBehavior::CreateStdClass);
+        $numSet = $evaluator->setValues($data, '$.my.deep.path', [10], NonExistentPathBehavior::CreateStdClass);
+
+        $this->assertEquals(1, $numSet, 'Create deep path and set value');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -762,7 +794,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
         );
 
         $data = new \stdClass();
-        $evaluator->setValues($data, '$.prices[*].value', [10], NonExistentPathBehavior::CreateStdClass);
+        $numSet = $evaluator->setValues($data, '$.prices[*].value', [10], NonExistentPathBehavior::CreateStdClass);
+
+        $this->assertEquals(0, $numSet, 'Wildcard can not be created dynamically');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -773,7 +807,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
         );
 
         $data = new \stdClass();
-        $evaluator->setValues($data, '$.prices[?@.value].value', [10], NonExistentPathBehavior::CreateStdClass);
+        $numSet = $evaluator->setValues($data, '$.prices[?@.value].value', [10], NonExistentPathBehavior::CreateStdClass);
+
+        $this->assertEquals(0, $numSet, 'Filter expression can not be created dynamically');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -813,7 +849,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
              }
            }');
 
-        $evaluator->deletePaths($data, '$..price');
+        $numDeleted = $evaluator->deletePaths($data, '$..price');
+
+        $this->assertEquals(3, $numDeleted, 'Delete all prices');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -837,7 +875,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'Delete all prices'
         );
 
-        $evaluator->deletePaths($data, '$.store.bicycle');
+        $numDeleted = $evaluator->deletePaths($data, '$.store.bicycle');
+
+        $this->assertEquals(1, $numDeleted, 'Delete bicycle');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -858,7 +898,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'Delete bicycle'
         );
 
-        $evaluator->deletePaths($data, '$.store.book[1:]');
+        $numDeleted = $evaluator->deletePaths($data, '$.store.book[1:]');
+
+        $this->assertEquals(1, $numDeleted, 'Delete array slice');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -874,7 +916,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'Delete array slice'
         );
 
-        $evaluator->deletePaths($data, '$.store.book[*]');
+        $numDeleted = $evaluator->deletePaths($data, '$.store.book[*]');
+
+        $this->assertEquals(1, $numDeleted, 'Delete wildcard');
 
         $this->assertJsonStringEqualsJsonString(
             (string)json_encode($data),
@@ -885,7 +929,9 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
             'Delete wildcard'
         );
 
-        $evaluator->deletePaths($data, '$');
+        $numDeleted = $evaluator->deletePaths($data, '$');
+
+        $this->assertEquals(1, $numDeleted, 'Delete root');
 
         $this->assertNull($data, 'Delete root');
     }
