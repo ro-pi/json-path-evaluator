@@ -5,8 +5,8 @@ This library is a PHP based implementation of JSONPath ([Internet Draft Version 
 It allows to evaluate JSONPath expressions directly on PHP objects and/or arrays.\
 This implementation passes all compliance tests of [JSONPath Compliance Test Suite](https://github.com/jsonpath-standard/jsonpath-compliance-test-suite).
 
-### Requirements
-* PHP >=8.1.0
+## Requirements
+* PHP >= 8.1
 * ext-ctype
 * ext-intl
 * ext-mbstring
