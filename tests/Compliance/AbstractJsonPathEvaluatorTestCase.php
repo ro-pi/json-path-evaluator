@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Ropi\JsonPathEvaluator\Tests\Functional\JsonPath;
+namespace Ropi\JsonPathEvaluator\Tests\Compliance;
 
 use PHPUnit\Framework\TestCase;
 

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Ropi\JsonPathEvaluator\Tests\Functional\JsonPath;
+namespace Ropi\JsonPathEvaluator\Tests\Compliance;
 
 use Ropi\JsonPathEvaluator\Exception\JsonPathEvaluatorException;
 use Ropi\JsonPathEvaluator\NonExistentPathBehavior;
@@ -1990,7 +1990,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
      */
     public function testCompliance(): void
     {
-        $testSuite = json_decode((string) file_get_contents(__DIR__ . '/../../Resources/jsonpath-compliance-test-suite/cts.json'));
+        $testSuite = json_decode((string) file_get_contents(__DIR__ . '/../Resources/jsonpath-compliance-test-suite/cts.json'));
         assert($testSuite instanceof \stdClass);
 
         $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
@@ -2034,7 +2034,7 @@ class JsonPathEvaluatorTest extends AbstractJsonPathEvaluatorTestCase
      */
     public function testComplianceAssociativeArray(): void
     {
-        $testSuite = json_decode((string) file_get_contents(__DIR__ . '/../../Resources/jsonpath-compliance-test-suite/cts.json'), true);
+        $testSuite = json_decode((string) file_get_contents(__DIR__ . '/../Resources/jsonpath-compliance-test-suite/cts.json'), true);
         assert(is_array($testSuite));
 
         $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
