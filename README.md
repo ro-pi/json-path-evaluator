@@ -492,7 +492,6 @@ Deleted all 2 books in store that are more expensive than 9:
 ### Custom function extensions
 The following example shows how to register custom function extensions according to section 2.4 of [JSONPath internet draft](https://datatracker.ietf.org/doc/draft-ietf-jsonpath-base/21/).
 ```php
-<?php
 $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
 
 $data = json_decode('{
