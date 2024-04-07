@@ -1,6 +1,6 @@
 # A JSONPath evaluator for PHP
 
-This library is a PHP based implementation of JSONPath ([Internet Draft Version 21](https://datatracker.ietf.org/doc/draft-ietf-jsonpath-base/21/)).
+This library is a PHP based implementation of JSONPath ([RFC 9535](https://datatracker.ietf.org/doc/rfc9535/)).
 
 It allows to evaluate JSONPath expressions directly on PHP objects and/or arrays.\
 This implementation passes all compliance tests of [JSONPath Compliance Test Suite](https://github.com/jsonpath-standard/jsonpath-compliance-test-suite).
@@ -194,7 +194,7 @@ All books where ISBN ends with 1, 2 or 3:
 ```
 
 ### Get paths
-The following example shows how to get value paths that match a JSONPath, where each value path is represented as normalized JSONPath according to section 2.7 of [JSONPath internet draft](https://datatracker.ietf.org/doc/draft-ietf-jsonpath-base/21/).\
+The following example shows how to get value paths that match a JSONPath, where each value path is represented as normalized JSONPath according to section 2.7 of [RFC 9535](https://datatracker.ietf.org/doc/rfc9535/).\
 The result is always an array of matched paths. If there are no matches, an empty array is returned.
 ```php
 $data = json_decode('{ "store": {
@@ -490,7 +490,7 @@ Deleted all 2 books in store that are more expensive than 9:
 }
 ```
 ### Custom function extensions
-The following example shows how to register custom function extensions according to section 2.4 of [JSONPath internet draft](https://datatracker.ietf.org/doc/draft-ietf-jsonpath-base/21/).
+The following example shows how to register custom function extensions according to section 2.4 of [RFC 9535](https://datatracker.ietf.org/doc/rfc9535/).
 ```php
 $evaluator = new \Ropi\JsonPathEvaluator\JsonPathEvaluator();
 
